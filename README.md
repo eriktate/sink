@@ -1,5 +1,5 @@
 # Sink
-An incremnted C...C incremented... C-inc? Sink!
+An incremented C...C incremented... C-inc? Sink!
 
 ## Goals
 - A C-like developer experience with some nice quality of life improvements.
