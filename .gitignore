@@ -1,3 +1,6 @@
+# Don't include builds in repo
+bin/*
+
 # Prerequisites
 *.d
 
