@@ -9,7 +9,8 @@ enum token_state {
 	EMPTY,
 	SYMBOL,
 	IDENT,
-	STRING
+	STRING,
+	NUMBER,
 };
 
 struct token {
