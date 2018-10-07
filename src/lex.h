@@ -3,7 +3,7 @@
 
 #define TOKEN_BUFFER_SIZE 32
 #define RESULT_BUFFER_SIZE 1024 // probably needs to be MUCH bigger.
-#define SYMBOL_GROUP_COUNT 22
+#define SYMBOL_GROUP_COUNT 23
 
 enum token_state {
 	EMPTY,

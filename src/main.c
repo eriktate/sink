@@ -5,11 +5,17 @@
 #include "lex.h"
 
 int main() {
+	// char *test_program =
+	// 	"int main(int argc, void argv[][]) {"
+	// 	"if (test >>= other_test)"
+	// 	"printf(\"Hello \\\"there\\n\");"
+	// 	"}";
+
 	char *test_program =
-		"int main(int argc, void argv[][]) {"
+		"fn main(string[] args) : int {"
 		"if (test >>= other_test)"
-		"printf(\"Hello \\\"there\\n\");"
-		"}";
+		"println(\"Hello \\\"there\\n\");"
+		"?";
 
 	struct lex_result res = init_result();
 	lex(&res, test_program);
