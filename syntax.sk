@@ -1,0 +1,38 @@
+#import io // importing code from the standard library requires no quotes or file extensions
+
+struct point { // structs behave identically to C structs.
+	f32 x; // yes...we use semicolons :D
+	f32 y;
+	f32 z;
+}
+
+fn new_point(f32 x, f32 y, f32 z) : point { // functions defined with 'fn' and return values come after a ':'.
+	return point { x, y, z }; // short form for defining a struct. Order matters here, obviously.
+}
+
+fn new_point(f32 x, f32 y) : point { // function overloading works as long as the parameters are different in some way.
+	return point { x, y, 0 }
+}
+
+fn +(point a, point b) : point { // functions with a name matching an operator perform overloading in cases that match the arguments provided.
+	return point { a.x + b.x, a.y + b.y, a.z + b.z};
+}
+
+fn +(point a, f32 amount) : point { // we can also override an operator for mismatched types.
+	return point { a.x + amount, a.y + amount, a.z + amount };
+}
+
+fn string(point p) : string { // implementing a string function for a given struct allows you to print it in a nice way. A default is used otherwise.
+	return sprint("Point: (%s, %s, %s)", p.x, p.y, p.z);
+}
+
+fn main() : int {
+	point point_a = new_point(5, 6.2, 3.14); // Creating struct type variables just involves using the struct name as a type name. Automatic type casting to f32 also happens for the '5' passed as an argument.
+
+	point_b := point_a + 3; // Type inferrence works just like Go. Here we can see operator overloading in aciton.
+
+	io.print("%s", point_b); // This will use the string function we've defined for the point type while printing.
+
+	return 0;
+}
+

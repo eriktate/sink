@@ -11,6 +11,7 @@ const char symbol_groups[SYMBOL_GROUP_COUNT][4] = {
 	{ "++" },
 	{ "--" },
 	{ "==" },
+	{ "[]" },
 	{ "!=" },
 	{ ">=" },
 	{ "<=" },
