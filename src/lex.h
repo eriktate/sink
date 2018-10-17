@@ -5,31 +5,127 @@
 #define RESULT_BUFFER_SIZE 1024 // probably needs to be MUCH bigger.
 #define SYMBOL_GROUP_COUNT 23
 
-enum token_state {
-	EMPTY,
+typedef enum lexing_state {
+	NONE,
 	SYMBOL,
 	IDENT,
 	STRING,
-	NUMBER,
-};
+	INT,
+	FLOAT,
+} lexing_state;
 
-struct token {
+typedef enum token_type {
+	TOK_ASSIGN,
+	TOK_PLUS,
+	TOK_MINUS,
+	TOK_MULT,
+	TOK_DIV,
+	TOK_MOD,
+	TOK_BANG,
+	TOK_LT,
+	TOK_GT,
+	TOK_AND,
+	TOK_OR,
+	TOK_XOR,
+	TOK_QUESTION,
+	TOK_COLON,
+	TOK_SEMICOLON,
+	TOK_LBRACKET,
+	TOK_RBRACKET,
+	TOK_LBRACE,
+	TOK_RBRACE,
+	TOK_LPAREN,
+	TOK_RPAREN,
+	TOK_DOT,
+	TOK_COMMA,
+
+	TOK_EQUAL,
+	TOK_INC,
+	TOK_DEC,
+	TOK_EMPTY_BRACE,
+	TOK_NOT_EQUAL,
+	TOK_GT_EQUAL,
+	TOK_LT_EQUAL,
+	TOK_LOGICAL_AND,
+	TOK_LOGICAL_OR,
+	TOK_SHIFT_LEFT,
+	TOK_SHIFT_ASSIGN,
+	TOK_PLUS_ASSIGN,
+	TOK_MINUS_ASSIGN,
+	TOK_MULT_ASSIGN,
+	TOK_DIV_ASSIGN,
+	TOK_MOD_ASSIGN,
+	TOK_SHIFT_LEFT_ASSIGN,
+	TOK_SHIFT_RIGHT_ASSIGN,
+	TOK_AND_ASSIGN,
+	TOK_OR_ASSIGN,
+	TOK_XOR_ASSIGN,
+	TOK_PTR_REF,
+	TOK_INF_ASSIGN, // This MUST be the last symbol token.
+
+	TOK_FN,
+	TOK_SWITCH,
+	TOK_CASE,
+	TOK_BREAK,
+	TOK_CONTINUE,
+	TOK_RETURN,
+	TOK_IF,
+	TOK_ELSE,
+	TOK_SIZEOF,
+	TOK_U8,
+	TOK_U16,
+	TOK_U32,
+	TOK_U64,
+	TOK_I8,
+	TOK_I16,
+	TOK_I32,
+	TOK_I64,
+	TOK_F32,
+	TOK_F64,
+	TOK_STRING,
+	TOK_BYTE,
+	TOK_BOOL,
+	TOK_TRUE,
+	TOK_FALSE,
+
+	NUM_TOK,
+
+	// Tokens that can't be instantly recognized.
+	TOK_INT_LIT,
+	TOK_FLOAT_LIT,
+	TOK_STRING_LIT,
+	TOK_IDENT,
+	TOK_NONE,
+} token_type;
+
+typedef struct token {
+	token_type type;
+	int line_number;
+	int start;
+	int end;
+	union value {
+		unsigned long long int_val;
+		double float_val;
+		const char *string_val;
+		const char *ident;
+	} value ;
+} token;
+
+typedef struct lex_result {
 	int len;
 	int cap;
-	char *data;
-};
-
-struct lex_result {
-	int len;
-	int cap;
-	struct token *tokens;
-};
+	token *tokens;
+} lex_result;
 
 
-void lex(struct lex_result *, char *);
-struct lex_result init_result();
+void lex(lex_result *, char *);
 
-void print_token(struct token);
-void print_result(struct lex_result);
+unsigned char token_equal(token, token);
+unsigned char token_equal_string(token, char *);
+struct token token_from_string(char *);
+char *get_type_name(token_type);
+
+void print_token( token);
+void print_result(lex_result);
 
 #endif // _LEX_H

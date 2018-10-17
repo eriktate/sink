@@ -3,6 +3,8 @@
 void - a no-op type.
 void * - a no-op pointer. Treated the same as a u8 pointer.
 
+enums - Enumerated types. Nothing really new going on here.
+
 i8  - 8-bit signed integer
 i16 - 16-bit signed integer
 i32 - 32-bit signed integer
