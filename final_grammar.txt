@@ -1,0 +1,26 @@
+# Identifiers and literals
+ident = [a-zA-Z_][a-zA-Z0-9]
+int = 0 | [1-9][0-9_]* | 0[xX][0-9a-fA-F]+ | 0[0-7]+ | 0[bB] [0-1]+
+float = [0-9]*[.][0-9]*([eE][0-9]*)?
+string = '"'[^"]*'"'
+
+primitives = i8   | i16 | i32    | i64  |
+			 u8   | u16 | u32    | u64  |
+			 f32  | f64 | string | char |
+			 byte | bool
+
+type = base_type | type_array | vector
+base_type = ident | primitives
+type_array = base_type"[" expr "]"
+vector = vec"<"type">"
+param = type ident
+param_list = param (, param)*
+statement = var_decl |
+var_decl = type ident;
+fn_decl = fn ident "(" [ param_list ] ")" | fn ident "(" [ param_list ]")" : type
+
+
+
+
+int[5] nums;
+vec<int> other_nums;

@@ -1,0 +1,252 @@
+keyword: one of
+	if        else         switch
+	case      break        continue
+	return    default      const
+	i8        i16          i32
+	i64       u8           u16
+	u32       u64          f32
+	f64       string       byte
+	vec       bool         while
+	for       struct       sizeof
+	enum      inline       void
+
+ident:
+	nondigit
+	ident nondigit
+	ident digit
+
+nondigit: one of
+	_ a b c d e f g h i j k l m
+	n o p q r s t u v w x y z A
+	B C D E F G H I J K L M N O
+	P Q R S T U V W X Y Z
+
+digit: one of
+	_ 0 1 2 3 4 5 6 7 8 9
+
+nonzero: one of
+	1 2 3 4 5 6 7 8 9
+
+
+const:
+	int-const
+	float-const
+	enum-const
+
+int-const:
+	dec-const
+	octal-const
+	hex-const
+
+dec-const:
+	nonzero
+	dec-const digit
+
+octal-const:
+	0
+	octal-const octal-digit
+
+octal-digit: one of
+	_ 0 1 2 3 4 5 6 7
+
+hex-const:
+	hex-prefix hex-digit
+	hex-const hex-digit
+
+hex-prefix: one of
+	0x 0X
+
+hex-digit: one of
+	_ 0 1 2 3 4 5 6 7 8 9
+	a b c d e f
+	A B C D E F
+
+float-const:
+	dec-float-const
+	hex-float-const
+
+dec-float-const:
+	frantion-const
+	fraction-const exponent
+
+fraction-const:
+	.digit-sequence
+	digit-sequence.digit-sequence
+	digit-sequence.
+
+digit-sequence:
+	digit
+	digit-sequence digit
+
+exponent:
+	e digit-sequence
+	e sign digit-sequence
+	E digit-sequence
+	E sign digit-sequence
+
+sign: one of
+	+ -
+
+escape:
+	string-escape
+
+string-escape: one of
+	\' \" \? \\
+	\a \b \f \n \r \t \v
+
+string-literal:
+	""
+	" string "
+
+string:
+	char
+	string-literal char
+
+char:
+	all utf-8 code points except " and \
+	escape
+
+enum-const:
+	ident.ident
+
+punctuator: one of
+	[  ] (  ) {  } . ->
+	++ -- & * + - ! ~
+	/ % << >> < > <= >= == != ^ | && ||
+	? : ;
+	= *= /= %= -= <<= >>= &= ^= |=
+	,
+
+primary-expr:
+	iden
+	constant
+	string-literal
+	( expression )
+
+postfix-expr:
+	primary-expr
+	postfix-expr [ expr ]
+	postfix-expr ( argument-expr-list )
+	postfix-expr ()
+	postfix-expr . ident
+	postfix-expr -> ident
+	postfix-expr ++
+	postfix-expr --
+
+argument-expr-list:
+	assignment-expr
+	argument-expr-list , assignment-expr
+
+unary-expr:
+	postfix-expr
+	++ unary-expr
+	-- unary-expr
+	unary-op cast-expr
+	sizeof unary-expr
+	sizeof ( type-name )
+
+unary-op: one of
+	& * + - ~ !
+
+cast-expr:
+	unary-expr
+	( type-name ) cast-expr
+
+multiplicative-expr:
+	cast-expr
+	multiplicative-expr * cast-expr
+	multplicative-expr / cast-expr
+	multplicative-expr % cast-expr
+
+additive-expr:
+	multiplicative-expr
+	additive-expr + multiplicative-expr
+	additive-expr - multiplicative-expr
+
+shift-expr:
+	additive-expr
+	shift-expr << additive-expr
+	shift-expr >> additive-expr
+
+relational-expr:
+	shift-expr
+	relational-expr < shift-expr
+	relational-expr > shift-expr
+	relational-expr <= shift-expr
+	relational-expr >= shift-expr
+
+equality-expr:
+	relational-expr
+	equality-expr == relational-expr
+	equality-expr != relational-expr
+
+and-expr:
+	equality-expr
+	and-expr & equality-expr
+
+xor-expr:
+	and-expr
+	xor-expr ^ and-expr
+
+or-expr:
+	xor-expr
+	or-expr | xor-expr
+
+logical-and-expr:
+	or-expr
+	logical-and-expr && or-expr
+
+logical-or-expr:
+	logical-and-expr
+	logical-or-expr || logical-and-expr
+
+ternary-expr:
+	logical-or-expr
+	logical-or-expr ? expr : ternary-expr
+
+assignment-expr:
+	ternary-expr
+	unary-expr assignment-op  assignemnt-expr
+
+assignment-op:
+	= *= /= %= += -= <<= >>= &= ^= |=
+
+expr:
+	assignment-expr
+	expr , assignment-expr
+
+decl:
+	type-spec ident
+
+type-spec:
+	void
+	i8
+	i16
+	i32
+	i64
+	u8
+	u16
+	u32
+	u64
+	f32
+	f64
+	byte
+	string
+
+	ident
+	vec-spec
+
+vec-spec:
+	vec< type-spec >
+
+type-qualifier:
+	const
+
+declarator:
+	direct-declarator
+	pointer direct-declarator
+
+direct-declarator:
+	ident
+	( declarator )
+	direct-declarator

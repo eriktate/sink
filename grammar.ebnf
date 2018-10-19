@@ -1,0 +1,47 @@
+newline = U+000A .
+unicode_letter = all unicode points classified as "Letter" .
+unicode_digit = all unicode points classified as "Number" .
+
+letter = unicode_letter | "_" .
+dec_digit = "0" ... "9" | "_".
+hex_digit = "0" ... "9" | "A" ... "F" | "a" ... "f" .
+oct_digit = "0" ... "7" .
+
+ident = letter { letter | unicode_digit } .
+int_lit = dec_lit | hex_lit | oct_lit .
+dec_lit = ("1" ... "9") { decimal_digit } .
+hex_lit = "0" ( "x" | "X" ) hex_digit { hex_digit } .
+oct_lit = "0" { oct_digit } .
+
+float_lit = decimals "." [ decimals ] [ exponent ] |
+		    decimals exponent |
+			"." decimals [ exponent ] .
+decimals = dec_digit { dec_digit } .
+exponent = ( "e" | "E" ) [ "+" | "-" ] decimals .
+
+char_lit = "'" ( unicode_value | byte_balue ) "'" .
+unicode_value = unicode_char | little_u_value | big_u_value | escaped_char .
+byte_value = octal_byte_value | hex_byte_value
+octal_byte_value = '\' octal_digit octal_digit octal_digit .
+hex_byte_value = '\' "x" hex_digit hex_digit .
+little_u_value = '\' "u" hex_digit hex_digit hex_digit hex_digit .
+big_u_value = '\' "U" hex_digit hex_digit hex_digit hex_digit
+					  hex_digit hex_digit hex_digit hex_digit .
+escaped_char = '\' ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | `\` | "'" | `"`) .
+
+string_lit = raw_string | interpreted_string .
+raw_string = "`" { unicode_char | newline } "`" .
+interpreted_string = `"` { unicode_value | byte_value } `"` .
+
+type = type_name | type_lit
+type_name = ident
+type_lit = array_type | struct_type | pointer_type
+
+struct = "struct" ident "{" [ field_list ] "}"
+field_list = var_decl { ";" var_decl }
+
+var_decl = type ident
+
+expr = int_lit | float_lit | char_lit | string_lit | binary_op | "(" expr ")"
+binary_expr = expr "+" expr | expr "-" expr
+
