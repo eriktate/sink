@@ -121,7 +121,7 @@ void print_token(struct token tok) {
 	}
 }
 
-void print_result(struct lex_result res) {
+void print_result(tok_iter res) {
 	for(int i = 0; i < res.len; i++) {
 		print_token(res.tokens[i]);
 		printf("\n");
@@ -157,7 +157,7 @@ void print_current(char *src) {
 	printf("\n");
 }
 
-void push_token(struct lex_result *res, char *input) {
+void push_token(tok_iter *res, char *input) {
 	// printf("Begin pushing token\n");
 	token tok = (token){
 		.line_number = line,
@@ -201,7 +201,7 @@ void push_token(struct lex_result *res, char *input) {
 	start = end;
 }
 
-void lex(struct lex_result *res, char *input) {
+void lex(tok_iter *res, char *input) {
 	unsigned char end_string = 0;
 
 	for (;;) {
@@ -374,6 +374,27 @@ void lex(struct lex_result *res, char *input) {
 			line++;
 		}
 	}
+}
+
+token tok_iterate(tok_iter *iter) {
+	printf("Iterating tokens from: %d\n", iter->idx);
+	if ((iter->idx) < iter->len) {
+		return iter->tokens[(iter->idx)++];
+	}
+
+	return (token){
+		.type = TOK_NONE,
+	};
+}
+
+token tok_peek(tok_iter *iter) {
+	if ((iter->idx) < iter->len) {
+		return iter->tokens[iter->idx];
+	}
+
+	return (token){
+		.type = TOK_NONE,
+	};
 }
 
 char *get_type_name(token_type t) {

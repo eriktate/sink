@@ -111,21 +111,24 @@ typedef struct token {
 	} value ;
 } token;
 
-typedef struct lex_result {
+typedef struct tok_iter {
 	int len;
 	int cap;
+	int idx;
 	token *tokens;
-} lex_result;
+} tok_iter;
 
 
-void lex(lex_result *, char *);
+void lex(tok_iter *, char *);
 
 unsigned char token_equal(token, token);
 unsigned char token_equal_string(token, char *);
 struct token token_from_string(char *);
 char *get_type_name(token_type);
+token tok_iterate(tok_iter *);
+token tok_peek(tok_iter *);
 
 void print_token( token);
-void print_result(lex_result);
+void print_result(tok_iter);
 
 #endif // _LEX_H
