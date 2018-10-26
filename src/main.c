@@ -15,8 +15,20 @@ typedef enum node_type {
 } node_type;
 
 typedef enum data_type {
-	T_I32,
-	T_STR,
+	T_U8 = TOK_U8,
+	T_U16 = TOK_U16,
+	T_U32 = TOK_U32,
+	T_U64 = TOK_U64,
+	T_I8 = TOK_I8,
+	T_I16 = TOK_I16,
+	T_I32 = TOK_I32,
+	T_I64 = TOK_I64,
+	T_F32 = TOK_F32,
+	T_F64 = TOK_F64,
+	T_STR = TOK_STRING,
+	T_BOOL = TOK_BOOL,
+	T_BYTE = TOK_BYTE,
+	T_CUSTOM = TOK_IDENT, // Needs to be determined later.
 } data_type;
 
 typedef struct var_decl {
@@ -104,22 +116,19 @@ fn_decl parse_fn(tok_iter *iter) {
 
 	// Paren loop
 	for(;;) {
-		printf("Expecting type...\n");
 		tok = tok_iterate(iter);
 		if (!((tok.type >= TOK_U8 && tok.type <= TOK_BOOL) || tok.type == TOK_IDENT)) {
 			printf("Not a type declaration...\n");
 			exit(1);
 			return decl;
 		}
-
+		var_decl arg = (var_decl){(data_type)tok.type};
 		// TODO (etate): Check for double braces or pointers here.
-		printf("Expecting name...\n");
 		tok = tok_iterate(iter);
 		expect_token(TOK_IDENT, tok);
-		var_decl arg = (var_decl){T_STR, tok.value.ident};
+		arg.name = tok.value.ident;
 		push_arg(&decl, arg);
 
-		printf("Checking next token...\n");
 		tok = tok_iterate(iter);
 		if (tok.type == TOK_COMMA) {
 			printf("Found a comma!\n");
@@ -137,15 +146,13 @@ fn_decl parse_fn(tok_iter *iter) {
 	tok = tok_iterate(iter);
 
 	if (tok.type == TOK_COLON) {
-		printf("Parsing return value\n");
-		// TODO (etate): Handle return values
 		tok = tok_iterate(iter);
 		if (tok.type == TOK_LPAREN) {
 			// Return type loop
 			for(;;) {
 				tok = tok_iterate(iter);
 				if (((tok.type >= TOK_U8 && tok.type <= TOK_BOOL) || tok.type == TOK_IDENT)) {
-					push_ret(&decl, T_STR); // TODO (erik): push actual return type here.
+					push_ret(&decl, (data_type)tok.type); // TODO (erik): push actual return type here.
 					continue;
 				}
 
@@ -157,12 +164,10 @@ fn_decl parse_fn(tok_iter *iter) {
 					break;
 				}
 
-				printf("Invalid token!\n");
 				exit(1);
 			}
 		} else if (((tok.type >= TOK_U8 && tok.type <= TOK_BOOL) || tok.type == TOK_IDENT)) {
-			printf("Adding return...\n");
-			push_ret(&decl, T_STR); // TODO (erik): push actual return type here.
+			push_ret(&decl, (data_type)tok.type); // TODO (erik): push actual return type here.
 		} else {
 			printf("Invalid token!\n");
 			exit(1);
@@ -199,7 +204,7 @@ int main() {
 	// 	"}";
 
 	char *test_program =
-		"fn main(i32 argc, str argv) : (int, str) {\n"
+		"fn main(i32 argc, str argv) : (i32, str) {\n"
 		"\tprintln(\"Hello \\\"there\\n\");\n"
 		"}\n";
 
