@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "lex.h"
+#include "expr.h"
 
 #define DEFAULT_BODY_CAP 100
 #define DEFAULT_PARAMS_CAP 10
@@ -14,22 +15,6 @@ typedef enum node_type {
 	N_VAR_DECL,
 } node_type;
 
-typedef enum data_type {
-	T_U8 = TOK_U8,
-	T_U16 = TOK_U16,
-	T_U32 = TOK_U32,
-	T_U64 = TOK_U64,
-	T_I8 = TOK_I8,
-	T_I16 = TOK_I16,
-	T_I32 = TOK_I32,
-	T_I64 = TOK_I64,
-	T_F32 = TOK_F32,
-	T_F64 = TOK_F64,
-	T_STR = TOK_STRING,
-	T_BOOL = TOK_BOOL,
-	T_BYTE = TOK_BYTE,
-	T_CUSTOM = TOK_IDENT, // Needs to be determined later.
-} data_type;
 
 typedef struct var_decl {
 	data_type type;
@@ -83,6 +68,10 @@ fn_decl make_fn() {
 	};
 }
 
+block make_block() {
+	return (block){};
+}
+
 void print_fn_decl(fn_decl fn) {
 	printf("Function: %s\n\tArgs: ", fn.name);
 	for(int i = 0; i < fn.argc; i++) {
@@ -97,7 +86,51 @@ void print_fn_decl(fn_decl fn) {
 	printf("\n");
 }
 
+var_decl parse_var_decl(data_type type, tok_iter *iter) {
+	// Expect an ident
+	token tok = tok_iterate(tok_iter);
+	if (tok.type != TOK_IDENT) {
+
+	}
+}
+
+fn_call parse_fn_call(token tok, tok_iter *iter) {
+
+}
+
 block parse_block(tok_iter *iter) {
+	// Types of statements
+	// =====================
+	// variable declarations
+	// variable assignments
+	// function calls
+	// if statements
+	// else statements
+	// for loops
+	// while loops
+	// break statement
+	// continue statement
+	// return statement
+	// switch statements
+
+	block b = make_block();
+	token tok;
+	for(;;) {
+		tok = tok_iterate(iter);
+		switch(tok.type) {
+		case TOK_IDENT:
+			if (tok_peek(iter).type == TOK_LPAREN) {
+				parse_fn_call(tok, iter);
+			}
+			break;
+		case TOK_U8: case TOK_U16: case TOK_U32: case TOK_U64:
+		case TOK_I8: case TOK_I16: case TOK_I32: case TOK_I64:
+		case TOK_F32: case TOK_F64: case TOK_STRING: case TOK_BYTE:
+		case TOK_BOOL:
+			parse_var_decl((data_type)tok.type, iter);
+		}
+	}
+
 	return (block){};
 }
 

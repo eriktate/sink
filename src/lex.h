@@ -98,17 +98,19 @@ typedef enum token_type {
 	TOK_NONE,
 } token_type;
 
+union literals {
+	unsigned long long int_val;
+	double float_val;
+	const char *string_val;
+	const char *ident;
+};
+
 typedef struct token {
 	token_type type;
 	int line_number;
 	int start;
 	int end;
-	union value {
-		unsigned long long int_val;
-		double float_val;
-		const char *string_val;
-		const char *ident;
-	} value ;
+	union literals value;
 } token;
 
 typedef struct tok_iter {
