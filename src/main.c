@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "lex.h"
 #include "expr.h"
@@ -22,8 +23,13 @@ typedef struct var_decl {
 	expr *assignment; // NULL if no assignment occurs
 } var_decl;
 
+typedef struct statement {
+	// TODO (erik): Add fields for statements.
+} statement;
+
 typedef struct block {
-	// TODO (erik): Add fields for blocks
+	size_t stmtc;
+	statement *statements;
 } block;
 
 typedef struct fn_decl {
@@ -73,26 +79,6 @@ block make_block() {
 	return (block){};
 }
 
-expr *make_expr() {
-	return (expr *)malloc(sizeof(expr));
-}
-expr *make_bin_expr(expr_binary bin) {
-	expr *e = make_expr();
-	e->type = EXPR_BINARY;
-	e->expr.binary = bin;
-
-	return e;
-}
-
-expr *make_term_expr(expr_term term) {
-	expr *e = make_expr();
-	e->type = EXPR_TERM;
-	e->expr.term = term;
-
-	return e;
-}
-
-
 void print_fn_decl(fn_decl fn) {
 	printf("Function: %s\n\tArgs: ", fn.name);
 	for(int i = 0; i < fn.argc; i++) {
@@ -114,31 +100,16 @@ void print_var_decl(var_decl var) {
 // forward parsing declarations
 expr_call parse_fn_call(token fn_name, tok_iter *iter);
 
-unsigned short int op_score(op o) {
-	switch(o) {
-	case OP_ADD: case OP_SUB:
-		return 1;
-	case OP_MULT: case OP_DIV: case OP_MOD:
-		return 2;
-	default:
-		return 0;
-	}
-}
-
-unsigned char higher_precedence(op higher, op lower) {
-	return op_score(higher) > op_score(lower);
-}
-
 expr *resolve_binary_expression(expr *e, op new_op) {
 	if (e->type != EXPR_BINARY || higher_precedence(e->expr.binary.op, new_op)) {
-		return make_bin_expr((expr_binary){
+		return alloc_expr_binary((expr_binary){
 			.lhs = e,
 			.op = new_op,
 			.rhs = NULL,
 		});
 	}
 
-	expr *new_expr = make_bin_expr((expr_binary){
+	expr *new_expr = alloc_expr_binary((expr_binary){
 		.lhs = e->expr.binary.rhs,
 		.op = new_op,
 		.rhs = NULL,
@@ -152,7 +123,7 @@ expr *resolve_binary_expression(expr *e, op new_op) {
 // forward declaration
 expr *parse_expr(tok_iter *iter) {
 	printf("Parsing expression!\n");
-	expr *e = make_expr();
+	expr *e = alloc_expr();
 	e->type = EXPR_NONE;
 
 	for(;;) {
@@ -161,7 +132,7 @@ expr *parse_expr(tok_iter *iter) {
 		case TOK_INT_LIT:
 			if (e->type == EXPR_UNARY) {
 				if (e->expr.unary.expr == NULL) {
-					e->expr.unary.expr = make_term_expr((expr_term) {
+					e->expr.unary.expr = alloc_expr_term((expr_term) {
 						.type = T_I32,
 						.value.int_val = tok.value.int_val,
 					});
@@ -174,7 +145,7 @@ expr *parse_expr(tok_iter *iter) {
 
 			if (e->type == EXPR_BINARY) {
 				if (e->expr.binary.rhs == NULL) {
-					e->expr.binary.rhs = make_term_expr((expr_term) {
+					e->expr.binary.rhs = alloc_expr_term((expr_term) {
 						.type = T_I32,
 						.value.int_val = tok.value.int_val,
 					});

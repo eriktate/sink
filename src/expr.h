@@ -2,6 +2,7 @@
 #define _EXPR_H
 
 #include "lex.h"
+#include <stdbool.h>
 
 typedef enum data_type {
 	T_U8 = TOK_U8,
@@ -77,5 +78,13 @@ typedef struct expr {
 		expr_group group;
 	} expr;
 } expr;
+
+unsigned short int op_score(op);
+bool higher_precedence(op, op);
+
+expr *alloc_expr();
+expr *alloc_expr_binary(expr_binary);
+expr *alloc_expr_unary(expr_unary);
+expr *alloc_expr_term(expr_term);
 
 #endif // _EXPR_H
