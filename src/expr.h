@@ -21,16 +21,17 @@ typedef enum data_type {
 } data_type;
 
 typedef enum op {
- 	OP_ADD,
-	OP_SUB,
-	OP_MULT,
-	OP_DIV,
-	OP_MOD,
+	OP_ADD = TOK_PLUS,
+	OP_SUB = TOK_MINUS,
+	OP_MULT = TOK_MULT,
+	OP_DIV = TOK_DIV,
+	OP_MOD = TOK_MOD,
 } op;
 
 struct expr; // have to forward declare expr for circular structures
 
 typedef enum expr_type {
+	EXPR_NONE,
 	EXPR_TERM,
 	EXPR_BINARY,
 	EXPR_UNARY,
@@ -55,7 +56,7 @@ typedef struct expr_unary {
 } expr_unary;
 
 typedef struct expr_call {
-	char *name;
+	const char *name;
 	int paramc;
 	struct expr *params;
 } expr_call;

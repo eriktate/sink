@@ -377,7 +377,6 @@ void lex(tok_iter *res, char *input) {
 }
 
 token tok_iterate(tok_iter *iter) {
-	printf("Iterating tokens from: %d\n", iter->idx);
 	if ((iter->idx) < iter->len) {
 		return iter->tokens[(iter->idx)++];
 	}
