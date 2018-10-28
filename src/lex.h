@@ -5,6 +5,8 @@
 #define RESULT_BUFFER_SIZE 1024 // probably needs to be MUCH bigger.
 #define SYMBOL_GROUP_COUNT 23
 
+#include <stdlib.h>
+
 typedef enum lexing_state {
 	NONE,
 	SYMBOL,
@@ -101,8 +103,8 @@ typedef enum token_type {
 union literals {
 	unsigned long long int_val;
 	double float_val;
-	const char *string_val;
-	const char *ident;
+	size_t string_val;
+	size_t ident;
 };
 
 typedef struct token {

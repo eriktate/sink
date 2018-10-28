@@ -57,7 +57,7 @@ typedef struct expr_unary {
 } expr_unary;
 
 typedef struct expr_call {
-	const char *name;
+	size_t name;
 	int paramc;
 	struct expr *params;
 } expr_call;
