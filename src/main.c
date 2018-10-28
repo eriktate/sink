@@ -1,11 +1,13 @@
+#include "lex.h"
+#include "expr.h"
+#include "intern.h"
+
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
-#include "lex.h"
-#include "expr.h"
 
 #define DEFAULT_BODY_CAP 100
 #define DEFAULT_PARAMS_CAP 10
@@ -389,12 +391,6 @@ void parse(tok_iter *iter) {
 }
 
 int main() {
-	// char *test_program =
-	// 	"int main(int argc, void argv[][]) {"
-	// 	"if (test >>= other_test)"
-	// 	"printf(\"Hello \\\"there\\n\");"
-	// 	"}";
-
 	char *test_program =
 		"fn main(i32 argc, str argv) : (i32, str) {\n"
 //		"\ti32 test;\n"
