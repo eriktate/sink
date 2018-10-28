@@ -20,10 +20,10 @@ struct intern {
 extern struct intern *intern;
 extern struct arena *strings;
 
-int is_interned(const char *str);
-int is_interned_slice(const char *str, size_t start, size_t end);
-size_t intern_string(char *str);
-size_t intern_slice(char *str, size_t start, size_t end);
-char *get_interned(size_t idx);
+const int is_interned(const char *str);
+const int is_interned_slice(const char *str, size_t start, size_t end);
+const size_t intern_string(char *str);
+const size_t intern_slice(char *str, size_t start, size_t end);
+const char *get_interned(size_t idx);
 
 #endif // _INTERN_H

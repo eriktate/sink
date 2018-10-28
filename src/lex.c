@@ -1,8 +1,10 @@
+#include "lex.h"
+#include "intern.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "lex.h"
 
 const char *reserved_map[] = {
 	[TOK_ASSIGN] = "=",
@@ -102,10 +104,10 @@ void print_token(struct token tok) {
 	printf("Type: %s, Line: %d, Start: %d, End: %d, ", get_type_name(tok.type), tok.line_number, tok.start, tok.end);
 	switch (tok.type) {
 	case TOK_IDENT:
-		printf("%s", tok.value.ident);
+		printf("%s", get_interned(tok.value.ident));
 		break;
 	case TOK_STRING_LIT:
-		printf("%s", tok.value.string_val);
+		printf("%s", get_interned(tok.value.string_val));
 		break;
 	case TOK_INT_LIT:
 		printf("%lld", tok.value.int_val);
@@ -142,11 +144,15 @@ const char *make_string(char *src) {
 }
 
 const int make_int(char *src) {
-	return atoi(make_string(src));
+	const char *str = make_string(src);
+	return atoi(str);
+	free(str);
 }
 
 const double make_float(char *src) {
-	return atof(make_string(src));
+	const char *str = make_string(src);
+	return atof(str);
+	free(str);
 }
 
 void print_current(char *src) {
@@ -170,14 +176,14 @@ void push_token(tok_iter *res, char *input) {
 		tok.type = check_reserved(input + start, end - start);
 		if (tok.type == TOK_NONE) {
 			tok.type = TOK_IDENT;
-			tok.value.ident = make_string(input);
+			tok.value.ident = intern_slice(input, start, end);
 		} else {
 			tok.value.ident = reserved_map[tok.type];
 		}
 		break;
 	case STRING:
 		tok.type = TOK_STRING_LIT;
-		tok.value.string_val = make_string(input);
+		tok.value.string_val = intern_slice(input, start, end);
 		break;
 	case INT:
 		tok.type = TOK_INT_LIT;

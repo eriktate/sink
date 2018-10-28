@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const size_t intern_size = 4096;
-static const size_t arena_size = intern_size * 1024;
+const size_t intern_size = 4096;
+const size_t arena_size = intern_size * 1024;
 
 struct intern *intern = NULL;
 struct arena *strings = NULL;
@@ -24,7 +24,7 @@ void initial_alloc() {
 	strings->next = strings->data;
 }
 
-int is_interned(const char *str) {
+const int is_interned(const char *str) {
 	for(int i = 0; i < intern->len; i++) {
 		if (strcmp(intern->strings[i], str) == 0) {
 			return i;
@@ -34,7 +34,7 @@ int is_interned(const char *str) {
 	return -1;
 }
 
-int is_interned_slice(const char *str, size_t start, size_t end) {
+const int is_interned_slice(const char *str, size_t start, size_t end) {
 	int len = end - start;
 
 	for(int i = 0; i < intern->len; i++) {
@@ -57,7 +57,7 @@ int is_interned_slice(const char *str, size_t start, size_t end) {
 	return -1;
 }
 
-size_t intern_string(char *str) {
+const size_t intern_string(char *str) {
 	if (intern == NULL) {
 		initial_alloc();
 	}
@@ -80,7 +80,7 @@ size_t intern_string(char *str) {
 	return (intern->len)++;
 }
 
-size_t intern_slice(char *str, size_t start, size_t end) {
+const size_t intern_slice(char *str, size_t start, size_t end) {
 	if (intern == NULL) {
 		initial_alloc();
 	}
@@ -104,6 +104,6 @@ size_t intern_slice(char *str, size_t start, size_t end) {
 	return (intern->len)++;
 }
 
-char *get_interned(size_t idx) {
+const char *get_interned(size_t idx) {
 	return intern->strings[idx];
 }

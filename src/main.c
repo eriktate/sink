@@ -21,7 +21,7 @@ typedef enum node_type {
 typedef struct var_decl {
 	data_type type;
 	const char *type_ident;
-	const char *name;
+	size_t name;
 	expr *assignment; // NULL if no assignment occurs
 } var_decl;
 
@@ -35,7 +35,7 @@ typedef struct block {
 } block;
 
 typedef struct fn_decl {
-	const char *name;
+	size_t name;
 	int argc;
 	var_decl *args;
 	int retc;
@@ -46,7 +46,7 @@ typedef struct fn_decl {
 
 // a program can consist of imports, function declarations, and (global) variable declarations.
 typedef struct program {
-	char *name;
+	size_t name;
 	int fnc;
 	fn_decl *fns;
 	int varc;
@@ -82,9 +82,9 @@ block make_block() {
 }
 
 void print_fn_decl(fn_decl fn) {
-	printf("Function: %s\n\tArgs: ", fn.name);
+	printf("Function: %s\n\tArgs: ", get_interned(fn.name));
 	for(int i = 0; i < fn.argc; i++) {
-		printf("%s: %d ", fn.args[i].name, fn.args[i].type);
+		printf("%s: %d ", get_interned(fn.args[i].name), fn.args[i].type);
 	}
 
 	printf("\n\tReturn: ");
@@ -96,7 +96,7 @@ void print_fn_decl(fn_decl fn) {
 }
 
 void print_var_decl(var_decl var) {
-	printf("Var: %s\n\tType: %d\n", var.name, var.type);
+	printf("Var: %s\n\tType: %d\n", get_interned(var.name), var.type);
 }
 
 // forward parsing declarations
