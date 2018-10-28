@@ -142,11 +142,11 @@ const char *make_string(char *src) {
 }
 
 const int make_int(char *src) {
-	return atoi(src);
+	return atoi(make_string(src));
 }
 
 const double make_float(char *src) {
-	return atof(src);
+	return atof(make_string(src));
 }
 
 void print_current(char *src) {

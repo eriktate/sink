@@ -163,6 +163,7 @@ expr *parse_expr(tok_iter *iter) {
 					.type = T_I32,
 					.value.int_val = tok.value.int_val,
 				};
+
 				break;
 			}
 
@@ -183,7 +184,7 @@ expr *parse_expr(tok_iter *iter) {
 
 var_decl parse_var_decl(token var_type, tok_iter *iter) {
 	printf("Parsing var decl!\n");
-	var_decl var = (var_decl){
+	var_decl *var = &(var_decl){
 		.type = (data_type)var_type.type,
 		.assignment = NULL,
 	};
@@ -195,17 +196,23 @@ var_decl parse_var_decl(token var_type, tok_iter *iter) {
 		exit(1);
 	}
 
-	var.name = tok.value.ident;
+	var->name = tok.value.ident;
 	token peek = tok_peek(iter);
 	if (peek.type == TOK_ASSIGN) {
 		tok_iterate(iter);
 		expr *e = parse_expr(iter);
-		var.assignment = e;
+		var->assignment = e;
 		peek = tok_peek(iter);
 	}
 
 	if (peek.type == TOK_SEMICOLON) {
-		return var;
+		// Check assignment expression
+		assert(var->assignment != NULL);
+		assert(var->assignment->type == EXPR_TERM);
+		assert(var->assignment->expr.term.type == T_I32);
+		printf("Expr term value: %lld", var->assignment->expr.term.value.int_val);
+		assert(var->assignment->expr.term.value.int_val == 12);
+		return *var;
 	}
 
 	printf("Something strange happened!\n");
@@ -390,7 +397,7 @@ int main() {
 
 	char *test_program =
 		"fn main(i32 argc, str argv) : (i32, str) {\n"
-		"\ti32 test;\n"
+//		"\ti32 test;\n"
 		"\ti32 other_test = 12;\n"
 		"}\n";
 
