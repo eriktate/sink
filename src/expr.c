@@ -44,3 +44,19 @@ expr *alloc_expr_term(expr_term term) {
 
 	return e;
 }
+
+expr *alloc_expr_var_decl(expr_var_decl var) {
+	expr *e = alloc_expr();
+	e->type = EXPR_VAR_DECL;
+	e->expr.var = var;
+
+	return e;
+}
+
+expr *alloc_expr_cast(expr_cast cast) {
+	expr *e = alloc_expr();
+	e->type = EXPR_CAST;
+	e->expr.cast = cast;
+
+	return e;
+}

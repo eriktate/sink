@@ -12,19 +12,6 @@
 #define DEFAULT_BODY_CAP 100
 #define DEFAULT_PARAMS_CAP 10
 
-typedef enum node_type {
-	N_PROGRAM,
-	N_FUNC_DECL,
-	N_VAR_DECL,
-} node_type;
-
-typedef struct var_decl {
-	data_type type;
-	const char *type_ident;
-	size_t name;
-	expr *assignment; // NULL if no assignment occurs
-} var_decl;
-
 typedef struct statement {
 	// TODO (erik): Add fields for statements.
 } statement;
@@ -36,9 +23,9 @@ typedef struct block {
 
 typedef struct fn_decl {
 	size_t name;
-	int argc;
-	var_decl *args;
-	int retc;
+	size_t argc;
+	expr_var_decl *args;
+	size_t retc;
 	data_type *ret; // potential array of return types. Order matters.
 
 	block body;
@@ -47,10 +34,10 @@ typedef struct fn_decl {
 // a program can consist of imports, function declarations, and (global) variable declarations.
 typedef struct program {
 	size_t name;
-	int fnc;
+	size_t fnc;
 	fn_decl *fns;
-	int varc;
-	var_decl *vars;
+	size_t varc;
+	expr_var_decl *vars;
 } program;
 
 int expect_token(token_type expected, token tok) {
@@ -62,7 +49,7 @@ int expect_token(token_type expected, token tok) {
 	return 0;
 }
 
-void push_arg(fn_decl *fn, var_decl arg) {
+void push_arg(fn_decl *fn, expr_var_decl arg) {
 	fn->args[fn->argc++] = arg;
 }
 
@@ -72,7 +59,7 @@ void push_ret(fn_decl *fn, data_type ret) {
 
 fn_decl make_fn() {
 	return (fn_decl){
-		.args = (var_decl*)malloc(sizeof(var_decl) * 20),
+		.args = (expr_var_decl*)malloc(sizeof(expr_var_decl) * 20),
 		.ret = (data_type*)malloc(sizeof(data_type) * 10),
 	};
 }
@@ -95,14 +82,21 @@ void print_fn_decl(fn_decl fn) {
 	printf("\n");
 }
 
-void print_var_decl(var_decl var) {
+void print_expr_var_decl(expr_var_decl var) {
 	printf("Var: %s\n\tType: %d\n", get_interned(var.name), var.type);
 }
 
 // forward parsing declarations
 expr_call parse_fn_call(token fn_name, tok_iter *iter);
+expr *parse_expr(tok_iter *iter);
+expr *parse_expr_binary(expr *lhs, bin_op op, tok_iter *iter);
+expr_cast parse_expr_cast(token type, tok_iter *iter);
+expr_var_decl parse_expr_var_decl(token type, tok_iter *iter);
+expr_unary parse_expr_unary(un_op op, tok_iter *iter);
+expr_log parse_expr_log(expr *lhs, log_op op, tok_iter *iter);
+expr_as parse_expr_as(expr *lhs, as_op op, tok_iter *iter);
 
-expr *resolve_binary_expression(expr *e, op new_op) {
+expr *resolve_binary_expression(expr *e, bin_op new_op) {
 	if (e->type != EXPR_BINARY || higher_precedence(e->expr.binary.op, new_op)) {
 		return alloc_expr_binary((expr_binary){
 			.lhs = e,
@@ -122,103 +116,129 @@ expr *resolve_binary_expression(expr *e, op new_op) {
 	return e;
 }
 
+expr_cast parse_expr_cast(token type, tok_iter *iter) {
+	return (expr_cast){
+		.type = (data_type)type.type,
+		.type_ident = type.type == TOK_IDENT ? type.value.ident : 0,
+		.expr = parse_expr(iter),
+	};
+}
+
+expr_term parse_expr_term(token tok) {
+	expr_term e = {};
+	switch(tok.type) {
+	case TOK_INT_LIT:
+		e.type = T_I64;
+		e.value.int_val = tok.value.int_val;
+		break;
+	case TOK_FLOAT_LIT:
+		e.type = T_F64;
+		e.value.float_val = tok.value.float_val;
+		break;
+	case TOK_STRING_LIT:
+		e.type = T_STR;
+		e.value.string_val = tok.value.string_val;
+		break;
+	case TOK_IDENT:
+		e.type = T_CUSTOM;
+		e.value.ident = tok.value.ident;
+		break;
+	default:
+		printf("Something strange happened\n");
+		exit(1);
+	}
+
+	return e;
+}
+
+expr *parse_expr_binary(expr *lhs, bin_op operator, tok_iter *iter) {
+	if (lhs->type != EXPR_BINARY || higher_precedence(lhs->expr.binary.op, operator)) {
+		return alloc_expr_binary((expr_binary){
+			.lhs = lhs,
+			.op = operator,
+			.rhs = parse_expr(iter),
+		});
+	}
+
+	expr *new_expr = alloc_expr_binary((expr_binary){
+		.lhs = lhs->expr.binary.rhs,
+		.op = operator,
+		.rhs = parse_expr(iter),
+	});
+
+	lhs->expr.binary.rhs = new_expr;
+
+	return lhs;
+}
+
+expr_unary parse_expr_unary(un_op op, tok_iter *iter) {
+	return (expr_unary){
+		.expr = parse_expr(iter),
+		.op = op,
+	};
+}
+
 // forward declaration
 expr *parse_expr(tok_iter *iter) {
 	printf("Parsing expression!\n");
-	expr *e = alloc_expr();
-	e->type = EXPR_NONE;
+	expr *e = NULL;
 
 	for(;;) {
-		token tok = tok_peek(iter);
+		token tok = tok_iterate(iter);
 		switch(tok.type) {
-		case TOK_INT_LIT:
-			if (e->type == EXPR_UNARY) {
-				if (e->expr.unary.expr == NULL) {
-					e->expr.unary.expr = alloc_expr_term((expr_term) {
-						.type = T_I32,
-						.value.int_val = tok.value.int_val,
-					});
-					break;
-				}
+		case TOK_INT_LIT: case TOK_STRING_LIT: case TOK_FLOAT_LIT:
+			e = alloc_expr(parse_expr_term(tok));
+			break;
 
-				printf("Expected an operator, ')', or ';' after unary op\n");
-				exit(1);
+		case TOK_INC: case TOK_DEC: case TOK_AND: case TOK_MULT: case TOK_BANG:
+			if (e == NULL) {
+				parse_expr_unary((un_op)tok.type, iter);
 			}
+		case TOK_PLUS: case TOK_MINUS: case TOK_DIV: case TOK_MOD:
+			e = parse_expr_binary(e, (bin_op)tok.type, iter);
+			break;
 
-			if (e->type == EXPR_BINARY) {
-				if (e->expr.binary.rhs == NULL) {
-					e->expr.binary.rhs = alloc_expr_term((expr_term) {
-						.type = T_I32,
-						.value.int_val = tok.value.int_val,
-					});
-					break;
-				}
-
-				printf("Expected an operator, ')', or ';' after binary op\n");
-				exit(1);
-			}
-
-			if (e->type == EXPR_NONE) {
-				printf("Found term\n");
-				e->type = EXPR_TERM;
-				e->expr.term = (expr_term){
-					.type = T_I32,
-					.value.int_val = tok.value.int_val,
-				};
-
+		case TOK_IDENT:
+			if (tok_peek(iter).type != TOK_IDENT && tok_peek(iter).type != TOK_LPAREN) {
+				// Create term.
+				e = alloc_expr(parse_expr_term(tok));
 				break;
 			}
 
-			printf("Int term can not be evaluated in this context!\n");
-			exit(1);
+		case TOK_U8: case TOK_U16: case TOK_U32: case TOK_U64:
+		case TOK_I8: case TOK_I16: case TOK_I32: case TOK_I64:
+		case TOK_F32: case TOK_F64: case TOK_STRING: case TOK_BYTE:
+		case TOK_BOOL:
+			if (tok_peek(iter).type == TOK_LPAREN) {
+				parse_expr_cast(tok, iter);
+			}
 
-		case TOK_PLUS: case TOK_MINUS: case TOK_MULT: case TOK_DIV: case TOK_MOD:
-			resolve_binary_expression(e, (op)tok.type);
+			parse_expr_var_decl(tok, iter);
 			break;
 
 		case TOK_SEMICOLON:
 			return e;
 		}
-
-		tok_iterate(iter);
 	}
 }
 
-var_decl parse_var_decl(token var_type, tok_iter *iter) {
-	printf("Parsing var decl!\n");
-	var_decl *var = &(var_decl){
-		.type = (data_type)var_type.type,
-		.assignment = NULL,
+expr_var_decl parse_expr_var_decl(token type, tok_iter *iter) {
+	expr_var_decl var = (expr_var_decl){
+		.type = (data_type)type.type,
+		.type_ident = type.type == TOK_IDENT ? type.value.ident : 0,
 	};
 
 	// Expect var ident
+	// TODO (erik): Eventually allow for multiple declarations on a single line.
 	token tok = tok_iterate(iter);
 	if (tok.type != TOK_IDENT) {
 		printf("Invalid token!\n");
 		exit(1);
 	}
 
-	var->name = tok.value.ident;
-	token peek = tok_peek(iter);
-	if (peek.type == TOK_ASSIGN) {
-		tok_iterate(iter);
-		expr *e = parse_expr(iter);
-		var->assignment = e;
-		peek = tok_peek(iter);
-	}
+	var.name = tok.value.ident;
 
-	if (peek.type == TOK_SEMICOLON) {
-		// Check assignment expression
-		assert(var->assignment != NULL);
-		assert(var->assignment->type == EXPR_TERM);
-		assert(var->assignment->expr.term.type == T_I32);
-		printf("Expr term value: %lld", var->assignment->expr.term.value.int_val);
-		assert(var->assignment->expr.term.value.int_val == 12);
-		return *var;
-	}
-
-	printf("Something strange happened!\n");
-	exit(1);
+	return var;
 }
 
 expr_call parse_fn_call(token fn_name, tok_iter *iter) {
@@ -253,6 +273,38 @@ expr_call parse_fn_call(token fn_name, tok_iter *iter) {
 	return e;
 }
 
+statement parse_statement(tok_iter *iter) {
+	statement s = (statement){};
+
+	token peek;
+	for(;;) {
+		peek = tok_peek(iter);
+
+		switch(peek.type) {
+		case TOK_IF:
+			// parse if statement.
+		case TOK_SWITCH:
+			// parse switch statement
+		case TOK_BREAK:
+			// parse break statement.
+		case TOK_CONTINUE:
+			// parse continue statement.
+		case TOK_RETURN:
+			// parse return statement.
+		case TOK_FOR:
+			// parse for loop.
+		case TOK_WHILE:
+			// parse while loop.
+			break;
+		default:
+			// parse expression statement.
+			parse_expr(iter);
+		}
+	}
+
+	return s;
+}
+
 block parse_block(tok_iter *iter) {
 	// Types of statements
 	// =====================
@@ -282,7 +334,7 @@ block parse_block(tok_iter *iter) {
 		case TOK_I8: case TOK_I16: case TOK_I32: case TOK_I64:
 		case TOK_F32: case TOK_F64: case TOK_STRING: case TOK_BYTE:
 		case TOK_BOOL:
-			print_var_decl(parse_var_decl(tok, iter));
+			print_expr_var_decl(parse_expr_var_decl(tok, iter));
 			break;
 		case TOK_SEMICOLON:
 			// push statement to block.
@@ -314,7 +366,7 @@ fn_decl parse_fn(tok_iter *iter) {
 			exit(1);
 			return decl;
 		}
-		var_decl arg = (var_decl){(data_type)tok.type};
+		expr_var_decl arg = (expr_var_decl){(data_type)tok.type};
 		// TODO (etate): Check for double braces or pointers here.
 		tok = tok_iterate(iter);
 		expect_token(TOK_IDENT, tok);

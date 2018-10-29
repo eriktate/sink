@@ -51,7 +51,7 @@ typedef enum token_type {
 	TOK_LOGICAL_AND,
 	TOK_LOGICAL_OR,
 	TOK_SHIFT_LEFT,
-	TOK_SHIFT_ASSIGN,
+	TOK_SHIFT_RIGHT,
 	TOK_PLUS_ASSIGN,
 	TOK_MINUS_ASSIGN,
 	TOK_MULT_ASSIGN,
@@ -62,7 +62,6 @@ typedef enum token_type {
 	TOK_AND_ASSIGN,
 	TOK_OR_ASSIGN,
 	TOK_XOR_ASSIGN,
-	TOK_PTR_REF,
 	TOK_INF_ASSIGN, // This MUST be the last symbol token.
 
 	TOK_FN,
@@ -74,6 +73,8 @@ typedef enum token_type {
 	TOK_IF,
 	TOK_ELSE,
 	TOK_SIZEOF,
+	TOK_FOR,
+	TOK_WHILE,
 	TOK_U8,
 	TOK_U16,
 	TOK_U32,
