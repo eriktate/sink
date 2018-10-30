@@ -138,11 +138,16 @@ expr_as parse_expr_as(expr *lhs, as_op op, tok_iter *iter) {
 		e.rhs = parse_expr(iter);
 	}
 
+	if (lhs->type == EXPR_TERM) {
+		// TODO (erik): Figure out how to type an ident term.
+	}
+
 
 	return e;
 }
 
 expr_term parse_expr_term(token tok) {
+	printf("Parsing term\n");
 	expr_term e = {};
 	switch(tok.type) {
 	case TOK_INT_LIT:
@@ -376,10 +381,10 @@ block parse_block(tok_iter *iter) {
 
 	printf("Parsing block!\n");
 	block b = make_block();
-	token tok;
+	token peek;
 	for(;;) {
-		tok = tok_iterate(iter);
-		switch(tok.type) {
+		peek = tok_peek(iter);
+		switch(peek.type) {
 		case TOK_SEMICOLON:
 			// push statement to block.
 			break;
@@ -509,8 +514,9 @@ void parse(tok_iter *iter) {
 int main() {
 	char *test_program =
 		"fn main(argc: i32, argv: str) : (i32, str) {\n"
-//		"\ti32 test;\n"
+		"\tlet test: i32;\n"
 		"\tlet other_test: i32 = 12;\n"
+		"\ttest = 24;"
 		"}\n";
 
 	token tokens[RESULT_BUFFER_SIZE];

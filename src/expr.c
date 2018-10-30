@@ -4,10 +4,16 @@
 
 unsigned short int op_score(bin_op o) {
 	switch(o) {
-	case BIN_ADD: case BIN_SUB:
+	case BIN_OR:
+		return 0;
+	case BIN_XOR:
 		return 1;
-	case BIN_MULT: case BIN_DIV: case BIN_MOD:
+	case BIN_AND:
 		return 2;
+	case BIN_ADD: case BIN_SUB:
+		return 3;
+	case BIN_MULT: case BIN_DIV: case BIN_MOD:
+		return 4;
 	default:
 		return 0;
 	}
