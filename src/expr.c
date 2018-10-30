@@ -2,18 +2,18 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-unsigned short int op_score(op o) {
+unsigned short int op_score(bin_op o) {
 	switch(o) {
-	case OP_ADD: case OP_SUB:
+	case BIN_ADD: case BIN_SUB:
 		return 1;
-	case OP_MULT: case OP_DIV: case OP_MOD:
+	case BIN_MULT: case BIN_DIV: case BIN_MOD:
 		return 2;
 	default:
 		return 0;
 	}
 }
 
-bool higher_precedence(op higher, op lower) {
+bool higher_precedence(bin_op higher, bin_op lower) {
 	return op_score(higher) > op_score(lower);
 }
 

@@ -41,7 +41,7 @@ const char *reserved_map[] = {
 	[TOK_LOGICAL_AND] = "&&",
 	[TOK_LOGICAL_OR] = "||",
 	[TOK_SHIFT_LEFT] = "<<",
-	[TOK_SHIFT_ASSIGN] = ">>",
+	[TOK_SHIFT_RIGHT] = ">>",
 	[TOK_PLUS_ASSIGN] = "+=",
 	[TOK_MINUS_ASSIGN] = "-=",
 	[TOK_MULT_ASSIGN] = "*=",
@@ -52,8 +52,6 @@ const char *reserved_map[] = {
 	[TOK_AND_ASSIGN] = "&=",
 	[TOK_OR_ASSIGN] = "|=",
 	[TOK_XOR_ASSIGN] = "^=",
-	[TOK_INF_ASSIGN] = ":=",
-	[TOK_PTR_REF] = "->",
 
 	[TOK_FN] = "fn",
 	[TOK_SWITCH] = "switch",
@@ -66,6 +64,9 @@ const char *reserved_map[] = {
 	[TOK_SIZEOF] = "sizeof",
 	[TOK_FOR] = "for",
 	[TOK_WHILE] = "while",
+	[TOK_LET] = "let",
+	[TOK_STATIC] = "static",
+	[TOK_CONST] = "const",
 	[TOK_U8] = "u8",
 	[TOK_U16] = "u16",
 	[TOK_U32] = "u32",
@@ -472,8 +473,8 @@ char *get_type_name(token_type t) {
 		return "TOK_LOGICAL_OR";
 	case TOK_SHIFT_LEFT:
 		return "TOK_SHIFT_LEFT";
-	case TOK_SHIFT_ASSIGN:
-		return "TOK_SHIFT_ASSIGN";
+	case TOK_SHIFT_RIGHT:
+		return "TOK_SHIFT_RIGHT";
 	case TOK_PLUS_ASSIGN:
 		return "TOK_PLUS_ASSIGN";
 	case TOK_MINUS_ASSIGN:
@@ -494,10 +495,6 @@ char *get_type_name(token_type t) {
 		return "TOK_OR_ASSIGN";
 	case TOK_XOR_ASSIGN:
 		return "TOK_XOR_ASSIGN";
-	case TOK_PTR_REF:
-		return "TOK_PTR_REF";
-	case TOK_INF_ASSIGN:
-		return "TOK_INF_ASSIGN";
 	case TOK_FN:
 		return "TOK_FN";
 	case TOK_SWITCH:
@@ -516,6 +513,16 @@ char *get_type_name(token_type t) {
 		return "TOK_ELSE";
 	case TOK_SIZEOF:
 		return "TOK_SIZEOF";
+	case TOK_FOR:
+		return "TOK_FOR";
+	case TOK_WHILE:
+		return "TOK_WHILE";
+	case TOK_LET:
+		return "TOK_LET";
+	case TOK_STATIC:
+		return "TOK_STATIC";
+	case TOK_CONST:
+		return "TOK_CONST";
 	case TOK_U8:
 		return "TOK_U8";
 	case TOK_U16:

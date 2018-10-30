@@ -23,8 +23,8 @@ typedef struct block {
 
 typedef struct fn_decl {
 	size_t name;
-	size_t argc;
-	expr_var_decl *args;
+	size_t paramc;
+	expr_var_decl *params;
 	size_t retc;
 	data_type *ret; // potential array of return types. Order matters.
 
@@ -49,8 +49,8 @@ int expect_token(token_type expected, token tok) {
 	return 0;
 }
 
-void push_arg(fn_decl *fn, expr_var_decl arg) {
-	fn->args[fn->argc++] = arg;
+void push_param(fn_decl *fn, expr_var_decl param) {
+	fn->params[fn->paramc++] = param;
 }
 
 void push_ret(fn_decl *fn, data_type ret) {
@@ -59,7 +59,7 @@ void push_ret(fn_decl *fn, data_type ret) {
 
 fn_decl make_fn() {
 	return (fn_decl){
-		.args = (expr_var_decl*)malloc(sizeof(expr_var_decl) * 20),
+		.params = (expr_var_decl*)malloc(sizeof(expr_var_decl) * 20),
 		.ret = (data_type*)malloc(sizeof(data_type) * 10),
 	};
 }
@@ -70,8 +70,8 @@ block make_block() {
 
 void print_fn_decl(fn_decl fn) {
 	printf("Function: %s\n\tArgs: ", get_interned(fn.name));
-	for(int i = 0; i < fn.argc; i++) {
-		printf("%s: %d ", get_interned(fn.args[i].name), fn.args[i].type);
+	for(int i = 0; i < fn.paramc; i++) {
+		printf("%s: %d ", get_interned(fn.params[i].name), fn.params[i].type);
 	}
 
 	printf("\n\tReturn: ");
@@ -122,6 +122,24 @@ expr_cast parse_expr_cast(token type, tok_iter *iter) {
 		.type_ident = type.type == TOK_IDENT ? type.value.ident : 0,
 		.expr = parse_expr(iter),
 	};
+}
+
+expr_as parse_expr_as(expr *lhs, as_op op, tok_iter *iter) {
+	printf("Parsing assignment\n");
+	// TODO (erik): Do validation on LHS. Make sure it can actually be assigned.
+	expr_as e = (expr_as){.lhs = lhs};
+
+	if (lhs->type == EXPR_VAR_DECL) {
+		if (op != TOK_ASSIGN) {
+			printf("Expected a '=' or a ';'\n");
+			exit(1);
+		}
+
+		e.rhs = parse_expr(iter);
+	}
+
+
+	return e;
 }
 
 expr_term parse_expr_term(token tok) {
@@ -185,6 +203,9 @@ expr *parse_expr(tok_iter *iter) {
 
 	for(;;) {
 		token tok = tok_iterate(iter);
+		printf("Evaluating token: ");
+		print_token(tok);
+		printf("\n");
 		switch(tok.type) {
 		case TOK_INT_LIT: case TOK_STRING_LIT: case TOK_FLOAT_LIT:
 			e = alloc_expr(parse_expr_term(tok));
@@ -198,6 +219,12 @@ expr *parse_expr(tok_iter *iter) {
 			e = parse_expr_binary(e, (bin_op)tok.type, iter);
 			break;
 
+		case TOK_ASSIGN: case TOK_PLUS_ASSIGN: case TOK_MINUS_ASSIGN: case TOK_MULT_ASSIGN:
+		case TOK_DIV_ASSIGN: case TOK_MOD_ASSIGN: case TOK_AND_ASSIGN: case TOK_OR_ASSIGN:
+		case TOK_XOR_ASSIGN: case TOK_SHIFT_RIGHT_ASSIGN: case TOK_SHIFT_LEFT_ASSIGN:
+			e = alloc_expr(parse_expr_as(e, (as_op)tok.type, iter));
+			break;
+
 		case TOK_IDENT:
 			if (tok_peek(iter).type != TOK_IDENT && tok_peek(iter).type != TOK_LPAREN) {
 				// Create term.
@@ -205,15 +232,8 @@ expr *parse_expr(tok_iter *iter) {
 				break;
 			}
 
-		case TOK_U8: case TOK_U16: case TOK_U32: case TOK_U64:
-		case TOK_I8: case TOK_I16: case TOK_I32: case TOK_I64:
-		case TOK_F32: case TOK_F64: case TOK_STRING: case TOK_BYTE:
-		case TOK_BOOL:
-			if (tok_peek(iter).type == TOK_LPAREN) {
-				parse_expr_cast(tok, iter);
-			}
-
-			parse_expr_var_decl(tok, iter);
+		case TOK_LET: case TOK_STATIC: case TOK_CONST:
+			e = alloc_expr(parse_expr_var_decl(tok, iter));
 			break;
 
 		case TOK_SEMICOLON:
@@ -222,21 +242,55 @@ expr *parse_expr(tok_iter *iter) {
 	}
 }
 
-expr_var_decl parse_expr_var_decl(token type, tok_iter *iter) {
-	expr_var_decl var = (expr_var_decl){
-		.type = (data_type)type.type,
-		.type_ident = type.type == TOK_IDENT ? type.value.ident : 0,
-	};
+expr_var_decl parse_expr_var_decl(token decl_type, tok_iter *iter) {
+	printf("Parsing name binding\n");
+	expr_var_decl var = (expr_var_decl){};
 
-	// Expect var ident
-	// TODO (erik): Eventually allow for multiple declarations on a single line.
+	switch(decl_type.type) {
+	case TOK_LET:
+		var.binding = BIND_LET;
+		break;
+	case TOK_STATIC:
+		var.binding = BIND_STATIC;
+		break;
+	case TOK_CONST:
+		var.binding = BIND_CONST;
+		break;
+	default:
+		printf("Something went wrong\n");
+		exit(1);
+	}
+
+	// Expect variable name
 	token tok = tok_iterate(iter);
 	if (tok.type != TOK_IDENT) {
-		printf("Invalid token!\n");
+		printf("Invalid token! Expected variable name\n");
 		exit(1);
 	}
 
 	var.name = tok.value.ident;
+
+	if (tok_peek(iter).type != TOK_COLON) {
+		var.type = T_INFERRED;
+		return var;
+	}
+
+	tok_iterate(iter); // consume colon
+
+	// Expect data type
+	tok = tok_iterate(iter);
+	switch(tok.type) {
+	case TOK_U8: case TOK_U16: case TOK_U32: case TOK_U64:
+	case TOK_I8: case TOK_I16: case TOK_I32: case TOK_I64:
+	case TOK_F32: case TOK_F64: case TOK_BOOL: case TOK_BYTE:
+	case TOK_STRING: case TOK_IDENT:
+		var.type = (data_type)tok.type;
+		var.type_ident = var.type == T_CUSTOM ? tok.value.ident : 0;
+		break;
+	default:
+		printf("Expected data type\n");
+		exit(1);
+	}
 
 	return var;
 }
@@ -326,26 +380,18 @@ block parse_block(tok_iter *iter) {
 	for(;;) {
 		tok = tok_iterate(iter);
 		switch(tok.type) {
-		case TOK_IDENT:
-			if (tok_peek(iter).type != TOK_IDENT) { // two idents back to back must be a variable declarion with a custom type.
-				break;
-			}
-		case TOK_U8: case TOK_U16: case TOK_U32: case TOK_U64:
-		case TOK_I8: case TOK_I16: case TOK_I32: case TOK_I64:
-		case TOK_F32: case TOK_F64: case TOK_STRING: case TOK_BYTE:
-		case TOK_BOOL:
-			print_expr_var_decl(parse_expr_var_decl(tok, iter));
-			break;
 		case TOK_SEMICOLON:
 			// push statement to block.
 			break;
 		case TOK_RBRACE:
 			return (block){};
+		default:
+			parse_expr(iter);
 		}
 	}
 }
 
-fn_decl parse_fn(tok_iter *iter) {
+fn_decl parse_fn_decl(tok_iter *iter) {
 	printf("Parsing fn...\n");
 	fn_decl decl = make_fn();
 
@@ -360,22 +406,40 @@ fn_decl parse_fn(tok_iter *iter) {
 
 	// Paren loop
 	for(;;) {
+		// Early short circuit
+		tok = tok_iterate(iter);
+		if (tok.type == TOK_RPAREN) {
+			break;
+		}
+
+		// Expect param name.
+		if (tok.type != TOK_IDENT) {
+			printf("Expected parameter name\n");
+			exit(1);
+		}
+
+		expr_var_decl param = (expr_var_decl){.name = tok.value.ident};
+
+		// Expect colon
+		tok = tok_iterate(iter);
+		if (tok.type != TOK_COLON) {
+			printf("Expected ':'\n");
+			exit(1);
+		}
+
+		// Expect type
 		tok = tok_iterate(iter);
 		if (!((tok.type >= TOK_U8 && tok.type <= TOK_BOOL) || tok.type == TOK_IDENT)) {
 			printf("Not a type declaration...\n");
 			exit(1);
-			return decl;
 		}
-		expr_var_decl arg = (expr_var_decl){(data_type)tok.type};
+
+		param.type = (data_type)tok.type;
 		// TODO (etate): Check for double braces or pointers here.
-		tok = tok_iterate(iter);
-		expect_token(TOK_IDENT, tok);
-		arg.name = tok.value.ident;
-		push_arg(&decl, arg);
+		push_param(&decl, param);
 
 		tok = tok_iterate(iter);
 		if (tok.type == TOK_COMMA) {
-			printf("Found a comma!\n");
 			continue;
 		}
 
@@ -434,7 +498,7 @@ void parse(tok_iter *iter) {
 		switch(tok.type) {
 		case TOK_FN:
 			printf("Found a function...\n");
-			print_fn_decl(parse_fn(iter));
+			print_fn_decl(parse_fn_decl(iter));
 			break;
 		default:
 			break;
@@ -444,9 +508,9 @@ void parse(tok_iter *iter) {
 
 int main() {
 	char *test_program =
-		"fn main(i32 argc, str argv) : (i32, str) {\n"
+		"fn main(argc: i32, argv: str) : (i32, str) {\n"
 //		"\ti32 test;\n"
-		"\ti32 other_test = 12;\n"
+		"\tlet other_test: i32 = 12;\n"
 		"}\n";
 
 	token tokens[RESULT_BUFFER_SIZE];
