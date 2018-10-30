@@ -18,8 +18,15 @@ typedef enum data_type {
 	T_STR = TOK_STRING,
 	T_BOOL = TOK_BOOL,
 	T_BYTE = TOK_BYTE,
-	T_CUSTOM = TOK_IDENT, // Needs to be determined later.
+	T_CUSTOM = TOK_IDENT, // Needs to be looked up in symbol table.
+	T_INFERRED, // Type can't be determined until assignment is evaulated.
 } data_type;
+
+typedef enum bind_type {
+	BIND_LET,
+	BIND_STATIC,
+	BIND_CONST,
+} bind_type;
 
 typedef enum un_op {
 	UN_REF = TOK_AND,
@@ -56,7 +63,6 @@ typedef enum log_op {
 
 typedef enum as_op {
 	AS_ASSIGN = TOK_ASSIGN,
-	AS_INF_ASSIGN = TOK_INF_ASSIGN,
 	AS_ADD_ASSIGN = TOK_PLUS_ASSIGN,
 	AS_SUB_ASSIGN = TOK_MINUS_ASSIGN,
 	AS_MULT_ASSIGN = TOK_MULT_ASSIGN,
@@ -124,6 +130,7 @@ typedef struct expr_group {
 } expr_group;
 
 typedef struct expr_var_decl {
+	bind_type binding;
 	data_type type;
 	size_t type_ident;
 	size_t name;
